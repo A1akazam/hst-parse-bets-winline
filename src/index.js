@@ -1,13 +1,11 @@
 const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium-min');
-
-process.env.TMPDIR='./';
+const chromium = require('@sparticuz/chromium');
 
 async function main(args) {
     const browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath('https://bet-bottom-dollar.fra1.digitaloceanspaces.com/chrome/chromium-v119.0.0-pack.tar'),
+        executablePath: await chromium.executablePath(),
         headless: chromium.headless,
     });
 
