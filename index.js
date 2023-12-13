@@ -1,5 +1,4 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer');
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 const crypto = require('crypto');
 const { writeFile } = require('node:fs/promises');
@@ -21,12 +20,7 @@ const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
 // const client = new MongoClient(`mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_HOST}:27017/${MONGODB_DB}`);
 
 async function main(args) {
-    const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-    });
+    const browser = await puppeteer.launch({headless: 'new', args: ['--shm-size=1gb']});
 
     const page = await browser.newPage();
     
