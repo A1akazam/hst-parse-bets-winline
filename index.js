@@ -140,4 +140,6 @@ function mapTeamName(shortName) {
     // ]
 }
 
-main();
+(async () => {
+    await main();
+})()
