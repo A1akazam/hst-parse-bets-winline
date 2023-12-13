@@ -28,9 +28,6 @@ async function main(args) {
 
     await new Promise(r => setTimeout(r, 10000));
 
-    console.log(await page.evaluate(() => {return Promise.resolve(document.body.innerHTML);}));
-        process.exit();
-
     const matchLinks = await page.evaluate(() => {
         const headers = document.querySelectorAll('.events-tournament-header');
         let links = [];
@@ -54,7 +51,9 @@ async function main(args) {
         console.log(matchLink);
         await page.goto(HOST + matchLink);
 
-        await new Promise(r => setTimeout(r, 10000));
+        await page.mainFrame().waitForSelector('.event-header-match');
+        await page.mainFrame().waitForSelector('.mg-total:first-child .mg-total__markets-item');
+        await new Promise(r => setTimeout(r, 5000));
 
         const matchData = await page.evaluate(() => {
             const data = {rates: []};
