@@ -30,7 +30,7 @@ async function main(args) {
 
     const page = await browser.newPage();
     
-    await page.goto(LISTING_URL);
+    await page.goto(LISTING_URL, {waitUntil: "domcontentloaded"});
 
     await new Promise(r => setTimeout(r, 10000));
 
