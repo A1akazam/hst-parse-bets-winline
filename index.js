@@ -34,6 +34,9 @@ async function main(args) {
 
     await new Promise(r => setTimeout(r, 10000));
 
+    console.log(await page.evaluate(() => {return Promise.resolve(document.body.innerHTML);}));
+        process.exit();
+
     const matchLinks = await page.evaluate(() => {
         const headers = document.querySelectorAll('.events-tournament-header');
         let links = [];
