@@ -22,8 +22,10 @@ const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
 
 async function main(args) {
     const browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath(),
-        args: ['--no-sandbox'],
+        headless: chromium.headless,
     });
 
     const page = await browser.newPage();
