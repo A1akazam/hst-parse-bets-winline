@@ -13,7 +13,7 @@ const dayjs = require('dayjs');
 const LISTING_URL = 'https://winline.by/sport/102/1083/96';
 const HOST = 'https://winline.by';
 
-const DATAFILE_PATH = './data/rates.json';
+const DATAFILE_PATH = __dirname + '/data/rates.json';
 
 const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
 
