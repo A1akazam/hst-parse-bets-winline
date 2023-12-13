@@ -1,4 +1,5 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium = require('@sparticuz/chromium');
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 const crypto = require('crypto');
 const { writeFile } = require('node:fs/promises');
@@ -13,14 +14,17 @@ const dayjs = require('dayjs');
 const LISTING_URL = 'https://winline.by/sport/102/1083/96';
 const HOST = 'https://winline.by';
 
-const DATAFILE_PATH = './data/rate.json';
+const DATAFILE_PATH = './data/rates.json';
 
 const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
 
 // const client = new MongoClient(`mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_HOST}:27017/${MONGODB_DB}`);
 
 async function main(args) {
-    const browser = await puppeteer.launch({headless: 'new', defaultViewport: {width: 1900, height: 986, isLandscape: true}});
+    const browser = await puppeteer.launch({
+        executablePath: await chromium.executablePath(),
+    });
+
     const page = await browser.newPage();
     
     await page.goto(LISTING_URL);
@@ -47,6 +51,7 @@ async function main(args) {
     });
 
     for await (let matchLink of matchLinks) {
+        console.log(matchLink);
         await page.goto(HOST + matchLink);
 
         await new Promise(r => setTimeout(r, 10000));
@@ -96,7 +101,6 @@ async function main(args) {
         matchData.parseData = dayjs().format('YYYY-MM-DD HH:mm');
 
         writeFile(DATAFILE_PATH, JSON.stringify(matchData) + "\n", {flag: 'a'});
-
     }
 
     await browser.close();
