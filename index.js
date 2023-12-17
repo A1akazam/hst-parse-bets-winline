@@ -1,14 +1,7 @@
 const puppeteer = require('puppeteer');
-// const { MongoClient, ServerApiVersion } = require('mongodb');
 const crypto = require('crypto');
 const { writeFile } = require('node:fs/promises');
 const dayjs = require('dayjs');
-
-// const MONGODB_USER = 'rate-history-user';
-// const MONGODB_PASSWORD = 'b5SUPD7aNq3A6gyWfcTGhusH8';
-// const MONGODB_HOST = '165.22.86.81';
-// const MONGODB_DB = 'rate-history';
-// const MONGODB_COLLECTION = 'rates';
 
 const LISTING_URL = 'https://winline.by/sport/102/1083/96';
 const HOST = 'https://winline.by';
@@ -17,13 +10,11 @@ const DATAFILE_PATH = __dirname + '/data/rates.json';
 
 const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
 
-// const client = new MongoClient(`mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_HOST}:27017/${MONGODB_DB}`);
-
 async function main(args) {
     const browser = await puppeteer.launch({headless: 'new', args: ['--shm-size=1gb']});
 
     const page = await browser.newPage();
-    
+
     await page.goto(LISTING_URL, {waitUntil: "domcontentloaded"});
 
     await new Promise(r => setTimeout(r, 10000));
@@ -49,57 +40,61 @@ async function main(args) {
 
     for await (let matchLink of matchLinks) {
         console.log(matchLink);
-        await page.goto(HOST + matchLink);
+        try {
+            await page.goto(HOST + matchLink);
 
-        await page.mainFrame().waitForSelector('.event-header-match');
-        await page.mainFrame().waitForSelector('.mg-total:first-child .mg-total__markets-item');
-        await new Promise(r => setTimeout(r, 5000));
+            await page.mainFrame().waitForSelector('.event-header-match');
+            await page.mainFrame().waitForSelector('.mg-total:first-child .mg-total__markets-item');
+            await new Promise(r => setTimeout(r, 1000));
 
-        const matchData = await page.evaluate(() => {
-            const data = {rates: []};
-            
-            const matchElement = document.querySelector('.event-header-match');
-            data.t1 = matchElement.firstChild.innerText.trim();
-            data.t2 = matchElement.lastChild.innerText.trim();
+            const matchData = await page.evaluate(() => {
+                const data = {rates: []};
 
-            let dateStr = matchElement.children[1].innerText.trim();
-            
-            let date = dateStr.split("\n")[0].split('/');
-            let time =  dateStr.split("\n")[1];
+                const matchElement = document.querySelector('.event-header-match');
+                data.t1 = matchElement.firstChild.innerText.trim();
+                data.t2 = matchElement.lastChild.innerText.trim();
 
-            if (dateStr.split("\n")[0] === dateStr.split("\n")[0].split('/')[0]) {
-                const today = dateStr.split("\n")[0] === 'Today';
-                const now = new Date();
-                now.setDate(now.getDate() + (today ? 0 : 1));
-              
-                date = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-            } else {
-                date = '20' + date.reverse().join('-');
-            }
+                let dateStr = matchElement.children[1].innerText.trim();
 
-            data.date = date + ' ' + time;
+                let date = dateStr.split("\n")[0].split('/');
+                let time =  dateStr.split("\n")[1];
 
+                if (dateStr.split("\n")[0] === dateStr.split("\n")[0].split('/')[0]) {
+                    const today = dateStr.split("\n")[0] === 'Today';
+                    const now = new Date();
+                    now.setDate(now.getDate() + (today ? 0 : 1));
 
-            const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
-            const totalElements = Array.from(document.querySelectorAll('.mg-total:first-child .mg-total__markets-item'));
-
-            for (let totalElement of totalElements) {
-                if (NEED_BLOCK_HEADER_TEXT === totalElement.closest('.mg').querySelector('.mg-header > .mg-header__name').innerText.trim()) {
-                    data.rates.push({
-                        v: parseFloat(totalElement.firstChild.innerText.trim()),
-                        u: parseFloat(totalElement.lastChild.firstChild.innerText.trim()) || null,
-                        o: parseFloat(totalElement.lastChild.lastChild.innerText.trim()) || null,
-                    });
+                    date = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+                } else {
+                    date = '20' + date.reverse().join('-');
                 }
-            }
 
-            return Promise.resolve(data);
-        });
+                data.date = date + ' ' + time;
 
-        matchData.hash = crypto.createHash('md5').update(matchData.t1 + matchData.t2 + matchData.date).digest('hex');
-        matchData.parseData = dayjs().format('YYYY-MM-DD HH:mm');
 
-        writeFile(DATAFILE_PATH, JSON.stringify(matchData) + "\n", {flag: 'a'});
+                const NEED_BLOCK_HEADER_TEXT = 'TOTAL';
+                const totalElements = Array.from(document.querySelectorAll('.mg-total:first-child .mg-total__markets-item'));
+
+                for (let totalElement of totalElements) {
+                    if (NEED_BLOCK_HEADER_TEXT === totalElement.closest('.mg').querySelector('.mg-header > .mg-header__name').innerText.trim()) {
+                        data.rates.push({
+                            v: parseFloat(totalElement.firstChild.innerText.trim()),
+                            u: parseFloat(totalElement.lastChild.firstChild.innerText.trim()) || null,
+                            o: parseFloat(totalElement.lastChild.lastChild.innerText.trim()) || null,
+                        });
+                    }
+                }
+
+                return Promise.resolve(data);
+            });
+
+            matchData.hash = crypto.createHash('md5').update(matchData.t1 + matchData.t2 + matchData.date).digest('hex');
+            matchData.parseData = dayjs().format('YYYY-MM-DD HH:mm');
+
+            writeFile(DATAFILE_PATH, JSON.stringify(matchData) + "\n", {flag: 'a'});
+        } catch (e) {
+            console.log('SKIP');
+        }
     }
 
     await browser.close();
